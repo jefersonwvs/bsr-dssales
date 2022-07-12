@@ -6,14 +6,59 @@ import { ReactComponent as DoneIcon } from '../../assets/done-icon.svg';
 import { ReactComponent as SyncIcon } from '../../assets/sync-icon.svg';
 import { ReactComponent as BarChartIcon } from '../../assets/bar-chart-icon.svg';
 import { ReactComponent as AvatarIcon } from '../../assets/avatar-icon.svg';
+import { FilterData, SalesSummaryData } from '../../types';
+import { useEffect, useMemo, useState } from 'react';
+import { buildFilterParams, makeRequest } from '../../utils/request';
 
-function SalesSummary() {
+type Props = {
+  filterData?: FilterData;
+};
+
+function SalesSummary(props: Props) {
+  const { filterData } = props;
+
+  const [summary, setSummary] = useState<SalesSummaryData>({
+    min: 0,
+    max: 0,
+    avg: 0,
+    count: 0,
+  });
+
+  const params = useMemo(() => buildFilterParams(filterData), [filterData]);
+
+  useEffect(() => {
+    makeRequest
+      .get<SalesSummaryData>('/sales/summary', { params })
+      .then((response) => {
+        setSummary(response.data);
+      })
+      .catch(() => {
+        console.error('Error to fetch sales by date');
+      });
+  }, [params]);
+
   return (
     <div className="sales-summary-container">
-      <SalesSummaryCard icon={<DoneIcon />} value={534} label="Média" />
-      <SalesSummaryCard icon={<SyncIcon />} value={44434} label="Quantidade" />
-      <SalesSummaryCard icon={<BarChartIcon />} value={434.0} label="Mínima" />
-      <SalesSummaryCard icon={<AvatarIcon />} value={3434.0} label="Máxima" />
+      <SalesSummaryCard
+        icon={<DoneIcon />}
+        value={summary?.avg?.toFixed(2)}
+        label="Média"
+      />
+      <SalesSummaryCard
+        icon={<SyncIcon />}
+        value={summary?.count}
+        label="Quantidade"
+      />
+      <SalesSummaryCard
+        icon={<BarChartIcon />}
+        value={summary?.min?.toFixed(2)}
+        label="Mínima"
+      />
+      <SalesSummaryCard
+        icon={<AvatarIcon />}
+        value={summary?.max?.toFixed(2)}
+        label="Máxima"
+      />
     </div>
   );
 }
